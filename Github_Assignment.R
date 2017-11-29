@@ -15,5 +15,26 @@ githubToken <- oauth2.0_token(oauth_endpoints("github"), myapplication)
 
 getToken <- config(token = githubToken)
 
+# Using user "phadej" to request data and use JSON 
 
+phadejRequest <- GET("https://api.github.com/users/phadej/followers?per_page=100;", getToken)
+
+stop_for_status(phadejRequest)
+
+# Extract content from a request
+extract = content(phadejReq)
+
+# Converting to a data.frame
+githubDB = jsonlite::fromJSON(jsonlite::toJSON(extract))
+
+# Subset data.frame
+githubDB[githubDB$full_name == "phadej", "created_at"] 
+githubDB
+
+
+
+phadejRaw<-("https://api.github.com/users/phadej/followers?per_page=100;")
+data<-fromJSON(phadejRaw)
+length(data)
+data$login
 
