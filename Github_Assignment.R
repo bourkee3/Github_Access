@@ -59,13 +59,13 @@ getFollowers <- function(currentusername)
   #Construct a while loop to gather users followers
   while(x!=0)
   {
-    followerSet <- GET( paste0("https://api.github.com/users/", currentusername, "/followers?per_page=100&page=", i))
+    followerSet <- GET( paste0("https://api.github.com/users/", currentusername, "/followers?per_page=100&page=", i),getToken)
     
     followersContent <- content(followerSet)
     
     currentFollowersDF <- lapply(followersContent, function(x) 
     {
-      df <- data_frame(user = x$login, userID = x$id, followersURL = x$followers_url, followingURL = x$following_url)
+      dataframe <- data_frame(user = x$login, userID = x$id, followersURL = x$followers_url, followingURL = x$following_url)
     }) %>% bind_rows()
     
     i <- i+1
@@ -78,7 +78,7 @@ getFollowers <- function(currentusername)
   return (followersDF)
 }
 
-
+getFollowers(phadej)
 
 getFollowing <- function(currentusername)
 {
@@ -92,13 +92,13 @@ getFollowing <- function(currentusername)
   #Construct a while loop to gather users followers
   while(x!=0)
   {
-    followingSet <- GET( paste0("https://api.github.com/users/", currentusername, "/following?per_page=100&page=", i))
+    followingSet <- GET( paste0("https://api.github.com/users/", currentusername, "/following?per_page=100&page=", i),getToken)
     
     followingContent <- content(followingSet)
     
     currentFollowingDF <- lapply(followingContent, function(x) 
     {
-      df <- data_frame(user = x$login, userID = x$id, followersURL = x$followers_url, followingURL = x$following_url)
+      dataframe <- data_frame(user = x$login, userID = x$id, followersURL = x$followers_url, followingURL = x$following_url)
     }) %>% bind_rows()
     
     i <- i+1
@@ -112,31 +112,36 @@ getFollowing <- function(currentusername)
 
 }
 
-#Check if we have already saved a users details
-anyConnection <- function(dataframe)
+#New function to get the repositories of the username entered 
+
+getRepos <- function(currentusername)
 {
-  noDups <- distinct(dataframe)
-  return(noDups)
+  i <- 1
+  x <- 1
+  
+  reposDF <- data_frame()#new empty dataframe to fill with repositories
+  
+  while(x!=0)
+  {
+    repository <- GET( paste0("https://api.github.com/users/", currentusername, "/repos?per_page=100&page=", i),getToken)
+    reposContent <- content(repository)
+    
+    currentReposDF <- lapply(reposContent, function(x) 
+    {
+      dataframe <- data_frame(repo = x$name, id = x$id, commits = x$git_commits_url)#information i want from the repositories
+    }) %>% bind_rows()
+    
+    i <- i+1 #iterate for the while loop
+    
+    x <- length(reposContent)
+    reposDF <- rbind(reposDF, currentReposDF)
+  }
+  return (reposDF)
 }
 
-users <- data_frame()
 
-user <- function(username)
-{
-  usersfollowers <- getFollowers(username)
-  usersfollowing <- getFollowing(username)
-  
-  users <- rbind(users,usersfollowers,usersfollowing)
-  
-  anyDups <- anyConnection(users)
-  return(anyDups)
-  
-}
 
-#create a list of the data retrieved from a specific Github user
 
-list <- user('phadej')
-list
 
 
 
