@@ -6,9 +6,9 @@ library(tidyverse)
 
 oauth_endpoints("github")
 
-myapplication1 <- oauth_app(appname = "EBCS3012",
-                   key = "ddee225589966bcbe25c",
-                   secret = "9c46a34247c5f9be9e0c766255695ad22b01fd97")
+myapplication1 <- oauth_app(appname = "EB_SoftwareEngineeering",
+                   key = "fa0c8e9b49c6375284a5",
+                   secret = "6a1ef805225bd715acedcc0f79de6b135b5f94df")
 
 
 githubToken1 <- oauth2.0_token(oauth_endpoints("github"), myapplication1)
@@ -67,6 +67,26 @@ totalfollowerslist = c()
 
 for(i in 1:length(users)){
   
+  #getting the current users following data using code tested above
+  
+  currentusername = users[i]
+  url = paste("https://api.github.com/users/", currentusername, "/following?per_page=100&page=")
+  following = GET( url,getToken)
+  following2 = content(following)
+  
+  #if user isnt following anyone move onto next username
+  if(length(following2)=0){
+    next
+  }
+  
+  followingDf = jsonlite::fromJSON(jsonlite::toJSON(following2))
+  followingloginName = followingDf$login
+  
+  #new for loop to get the followings followers, more data to visualise 
+  
+  
+  
+    
 }
 
 
