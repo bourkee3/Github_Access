@@ -6,14 +6,14 @@ library(tidyverse)
 
 oauth_endpoints("github")
 
-myapplication <- oauth_app(appname = "EBCS3012",
+myapplication1 <- oauth_app(appname = "EBCS3012",
                    key = "ddee225589966bcbe25c",
-                   secret = "997c0f014a19a6ee011832f58bfbf16e52e02653")
+                   secret = "9c46a34247c5f9be9e0c766255695ad22b01fd97")
 
 
-githubToken <- oauth2.0_token(oauth_endpoints("github"), myapplication)
+githubToken1 <- oauth2.0_token(oauth_endpoints("github"), myapplication1)
 
-getToken <- config(token = githubToken)
+getToken1 <- config(token = githubToken)
 
 # Using user "phadej" to request data and use JSON 
 
@@ -43,8 +43,32 @@ data$login
 
 #Get current users followers
 #Get who current user follows
-#Convert to database file in each function 
-#Check for duplication or connection within the dataframes
+#Convert to database
+#Check for duplication
+
+#using a single for loop to gather data from a user ie. who the follow and who their followers follow.
+#including number of repositories commits etc.
+
+data <- GET("https://api.github.com/users/phadej/followers?per_page=100;", getToken)
+extract = content(data)
+dataframe1 = jsonlite::fromJSON(jsonlite::toJSON(extract))
+#create dataframe to place collected data 
+id = dataframe1$login
+users = c(id)
+
+#main dataframe with data collected from interrogation of API 
+userDF = data.frame(Username=integer(), Followers = integer(), Repositories = integer())  
+
+allusers = c()
+numberofrepos = c()
+totalfollowerslist = c()
+
+#FOR loop to gather data from initial user, user hardcoded above 
+
+for(i in 1:length(users)){
+  
+}
+
 
 
 getFollowers <- function(currentusername)
