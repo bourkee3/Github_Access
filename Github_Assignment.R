@@ -1,11 +1,14 @@
+#install.packages("jsonlite")
 library(jsonlite)
+#install.packages("httpuv")
 library(httpuv)
+#install.packages("httr")
 library(httr)
-library(dplyr)
-library(tidyverse)
+
 
 oauth_endpoints("github")
 
+#based on your own auth key 
 myapplication1 <- oauth_app(appname = "EB_SoftwareEngineeering",
                    key = "fa0c8e9b49c6375284a5",
                    secret = "6a1ef805225bd715acedcc0f79de6b135b5f94df")
@@ -13,11 +16,11 @@ myapplication1 <- oauth_app(appname = "EB_SoftwareEngineeering",
 
 githubToken1 <- oauth2.0_token(oauth_endpoints("github"), myapplication1)
 
-getToken1 <- config(token = githubToken)
+getToken1 <- config(token = githubToken1)
 
 # Using user "phadej" to request data and use JSON 
 
-phadejRequest <- GET("https://api.github.com/users/phadej/followers?per_page=100;", getToken)
+phadejRequest <- GET("https://api.github.com/users/phadej/followers?per_page=100;", getToken1)
 
 stop_for_status(phadejRequest)
 
@@ -49,7 +52,9 @@ data$login
 #using a single for loop to gather data from a user ie. who the follow and who their followers follow.
 #including number of repositories commits etc.
 
-data <- GET("https://api.github.com/users/phadej/followers?per_page=100;", getToken)
+#Interrogate API to get the following of a user
+
+data <- GET("https://api.github.com/users/phadej/following?per_page=100;", getToken1)
 extract = content(data)
 dataframe1 = jsonlite::fromJSON(jsonlite::toJSON(extract))
 #create dataframe to place collected data 
@@ -59,6 +64,7 @@ users = c(id)
 #main dataframe with data collected from interrogation of API 
 userDF = data.frame(Username=integer(), Followers = integer(), Repositories = integer())  
 
+#create empty vectors to hold collected data
 allusers = c()
 numberofrepos = c()
 totalfollowerslist = c()
@@ -71,7 +77,7 @@ for(i in 1:length(users)){
   
   currentusername = users[i]
   url = paste("https://api.github.com/users/", currentusername, "/following?per_page=100&page=")
-  following = GET( url,getToken)
+  following = GET( url,getToken1)
   following2 = content(following)
   
   #if user isnt following anyone move onto next username
@@ -84,10 +90,22 @@ for(i in 1:length(users)){
   
   #new for loop to get the followings followers, more data to visualise 
   
-  
-  
-    
+  for(j in 1:length(followingloginName)){
+    if(is.element(followingloginName[j], allusers)== FALSE){
+      url2 = paste("https://api.github.com/users/", followingloginName[j], "/followers?per_page=100&page=")
+      followers = GET( url2,getToken1)
+      followers2 = content(followers)
+      followersDF = jsonlite::fromJSON(jsonlite::toJSON(followers2))
+      followerslist = followersDF$followers
+      reposlist = followersDF$public_repos
+      userDF[nrow(userDF)+1,]=c(followingloginName[j], followerslist, reposlist)
+    }
+    next
+  }
+  next
 }
+
+totalfollowersDF = do.call(rbind.data.frame, totalfollowerslist)
 
 
 
@@ -103,7 +121,7 @@ getFollowers <- function(currentusername)
   #Construct a while loop to gather users followers
   while(x!=0)
   {
-    followerSet <- GET( paste0("https://api.github.com/users/", currentusername, "/followers?per_page=100&page=", i),getToken)
+    followerSet <- GET( paste0("https://api.github.com/users/", currentusername, "/followers?per_page=100&page=", i),getToken1)
     
     followersContent <- content(followerSet)
     
@@ -136,7 +154,7 @@ getFollowing <- function(currentusername)
   #Construct a while loop to gather users followers
   while(x!=0)
   {
-    followingSet <- GET( paste0("https://api.github.com/users/", currentusername, "/following?per_page=100&page=", i),getToken)
+    followingSet <- GET( paste0("https://api.github.com/users/", currentusername, "/following?per_page=100&page=", i),getToken1)
     
     followingContent <- content(followingSet)
     
@@ -167,7 +185,7 @@ getRepos <- function(currentusername)
   
   while(x!=0)
   {
-    repository <- GET( paste0("https://api.github.com/users/", currentusername, "/repos?per_page=100&page=", i),getToken)
+    repository <- GET( paste0("https://api.github.com/users/", currentusername, "/repos?per_page=100&page=", i),getToken1)
     reposContent <- content(repository)
     
     currentReposDF <- lapply(reposContent, function(x) 
