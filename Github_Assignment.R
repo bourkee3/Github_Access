@@ -4,6 +4,8 @@ library(jsonlite)
 library(httpuv)
 #install.packages("httr")
 library(httr)
+#install.packages("ggplot2")
+library(ggplot2)
 
 
 oauth_endpoints("github")
@@ -21,6 +23,7 @@ getToken1 <- config(token = githubToken1)
 # Using user "phadej" to request data and use JSON 
 
 phadejRequest <- GET("https://api.github.com/users/phadej/followers?per_page=100;", getToken1)
+phadejRequest
 
 stop_for_status(phadejRequest)
 
@@ -37,9 +40,30 @@ githubDB
 
 
 phadejRaw<-("https://api.github.com/users/phadej/followers?per_page=100;")
-data<-fromJSON(phadejRaw)
-length(data)
-data$login
+data2<-fromJSON(phadejRaw)
+length(data2)
+data2$login
+
+request <- GET("https://api.github.com/users/dowlind1/followers?per_page=100;", getToken1)
+
+stop_for_status(request)
+
+# Extract content from a request
+extract2 = content(request)
+
+# Converting to a data.frame
+githubDB2 = jsonlite::fromJSON(jsonlite::toJSON(extract2))
+
+# Subset data.frame
+githubDB2[githubDB2$full_name == "dowlind1", "created_at"] 
+githubDB2
+
+
+
+jRaw<-("https://api.github.com/users/dowlind1/followers?per_page=100;")
+data3<-fromJSON(jRaw)
+length(data3)
+data3$login
 
 #Want to extract the current users followers and then extract who the current user follows
 #then check if there is duplication or a connection between who the current user follows and their followers
@@ -52,159 +76,105 @@ data$login
 #using a single for loop to gather data from a user ie. who the follow and who their followers follow.
 #including number of repositories commits etc.
 
-#Interrogate API to get the following of a user
+#Interrogate API to get FOLLOWERS
 
-data <- GET("https://api.github.com/users/phadej/following?per_page=100;", getToken1)
+data <- GET("https://api.github.com/users/Finnegr1/following?per_page=100;", getToken1)
+data
 extract = content(data)
 dataframe1 = jsonlite::fromJSON(jsonlite::toJSON(extract))
 #create dataframe to place collected data 
 id = dataframe1$login
+id
 users = c(id)
 
 #main dataframe with data collected from interrogation of API 
-userDF = data.frame(Username=integer(), Followers = integer(), Repositories = integer())  
+#userDF = data.frame(Username=integer(), Followers = integer(), Repositories = integer())  
 
 #create empty vectors to hold collected data
 allusers = c()
-numberofrepos = c()
-totalfollowerslist = c()
+#numberofrepos = c()
+#totalfollowerslist = c()
+
 
 #FOR loop to gather data from initial user, user hardcoded above 
 
+
+
+
 for(i in 1:length(users)){
-  
-  #getting the current users following data using code tested above
-  
   currentusername = users[i]
-  url = paste("https://api.github.com/users/", currentusername, "/following?per_page=100&page=")
-  following = GET( url,getToken1)
-  following2 = content(following)
-  
-  #if user isnt following anyone move onto next username
-  if(length(following2)=0){
+  url = paste("https://api.github.com/users/", currentusername, "/followers",sep = "")
+  followers = fromJSON(url)
+  followerslogin = followers$login
+  url2 = paste("https://api.github.com/users/", currentusername,sep = "")
+  repos = fromJSON(url2)
+  reposlist = repos$public_repos
+}
+totalusers = c(followerslogin, reposlist)
+
+totalFollowers = write.csv(totalusers, 'data.csv')
+
+
+#Interrogate Github
+data <- fromJSON("https://api.github.com/users/sorchaobyrne/followers")
+
+names(data)
+
+#Find login names
+id = data1$login
+
+users = c(id)
+
+#all users followers
+users
+
+#Create temporary vector 
+totalusers = c()
+totalusers2 = c()
+
+#Interrogate Github to get FOLLOWERS into a CSV
+for (i in 1:length(users))
+{
+  username = users[i]
+  url = paste("https://api.github.com/users/" , username, "/followers", sep = "")
+  followers = fromJSON(url)
+  login = followers$login
+  for (j in 1:length(followerslogin))
+  {
+    if (is.element(login[j], totalusers) == FALSE)
+    {
+      totalusers[[length(totalusers)+1]] = login[j]
+    }
     next
   }
-  
-  followingDf = jsonlite::fromJSON(jsonlite::toJSON(following2))
-  followingloginName = followingDf$login
-  
-  #new for loop to get the followings followers, more data to visualise 
-  
-  for(j in 1:length(followingloginName)){
-    if(is.element(followingloginName[j], allusers)== FALSE){
-      url2 = paste("https://api.github.com/users/", followingloginName[j], "/followers?per_page=100&page=")
-      followers = GET( url2,getToken1)
-      followers2 = content(followers)
-      followersDF = jsonlite::fromJSON(jsonlite::toJSON(followers2))
-      followerslist = followersDF$followers
-      reposlist = followersDF$public_repos
-      userDF[nrow(userDF)+1,]=c(followingloginName[j], followerslist, reposlist)
+  next
+}
+totalusers
+
+totalFollowers = write.csv(totalusers, 'Followers.csv')
+
+#Interrogate Github to get FOLLOWING into a CSV
+
+for (i in 1:length(users))
+{
+  username = users[i]
+  url = paste("https://api.github.com/users/" , username, "/following", sep = "")
+  following = fromJSON(url)
+  followinglogin = following$login
+  for (j in 1:length(followinglogin))
+  {
+    if (is.element(followinglogin[j], totalusers2) == FALSE)
+    {
+      totalusers2[[length(totalusers2)+1]] = followinglogin[j]
     }
     next
   }
   next
 }
 
-totalfollowersDF = do.call(rbind.data.frame, totalfollowerslist)
+totalusers2
 
-
-
-getFollowers <- function(currentusername)
-{
-  #set while loop variables 
-  i <- 1
-  x <- 1
-  
-  #dataframe variable where both followers and following data will go and be checked for duplication
-  followersDF <- data_frame()
-  
-  #Construct a while loop to gather users followers
-  while(x!=0)
-  {
-    followerSet <- GET( paste0("https://api.github.com/users/", currentusername, "/followers?per_page=100&page=", i),getToken1)
-    
-    followersContent <- content(followerSet)
-    
-    currentFollowersDF <- lapply(followersContent, function(x) 
-    {
-      dataframe <- data_frame(user = x$login, userID = x$id, followersURL = x$followers_url, followingURL = x$following_url)
-    }) %>% bind_rows()
-    
-    i <- i+1
-    x <- length(followersContent)
-    
-    followersDF <- rbind(followersDF, currentFollowersDF)
-    
-    
-  }
-  return (followersDF)
-}
-
-getFollowers(phadej)
-
-getFollowing <- function(currentusername)
-{
-  #set while loop variables 
-  i <- 1
-  x <- 1
-  
-  #dataframe variable where both followers and following data will go and be checked for duplication
-  followingDF <- data_frame()
-  
-  #Construct a while loop to gather users followers
-  while(x!=0)
-  {
-    followingSet <- GET( paste0("https://api.github.com/users/", currentusername, "/following?per_page=100&page=", i),getToken1)
-    
-    followingContent <- content(followingSet)
-    
-    currentFollowingDF <- lapply(followingContent, function(x) 
-    {
-      dataframe <- data_frame(user = x$login, userID = x$id, followersURL = x$followers_url, followingURL = x$following_url)
-    }) %>% bind_rows()
-    
-    i <- i+1
-    x <- length(followingContent)
-    
-    followingDF <- rbind(followingDF, currentFollowingDF)
-    
-    
-  }
-  return (followingDF)
-
-}
-
-#New function to get the repositories of the username entered 
-
-getRepos <- function(currentusername)
-{
-  i <- 1
-  x <- 1
-  
-  reposDF <- data_frame()#new empty dataframe to fill with repositories
-  
-  while(x!=0)
-  {
-    repository <- GET( paste0("https://api.github.com/users/", currentusername, "/repos?per_page=100&page=", i),getToken1)
-    reposContent <- content(repository)
-    
-    currentReposDF <- lapply(reposContent, function(x) 
-    {
-      dataframe <- data_frame(repo = x$name, id = x$id, commits = x$git_commits_url)#information i want from the repositories
-    }) %>% bind_rows()
-    
-    i <- i+1 #iterate for the while loop
-    
-    x <- length(reposContent)
-    reposDF <- rbind(reposDF, currentReposDF)
-  }
-  return (reposDF)
-}
-
-
-
-
-
+write.csv(totalusers2, 'Following.csv')
 
 
 
