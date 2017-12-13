@@ -34,15 +34,9 @@ extract = content(phadejRequest)
 githubDB = jsonlite::fromJSON(jsonlite::toJSON(extract))
 
 # Subset data.frame
-githubDB[githubDB$full_name == "phadej", "created_at"] 
-githubDB
+githubDB$login
+githubDB$
 
-
-
-phadejRaw<-("https://api.github.com/users/phadej/followers?per_page=100;")
-data2<-fromJSON(phadejRaw)
-length(data2)
-data2$login
 
 request <- GET("https://api.github.com/users/dowlind1/followers?per_page=100;", getToken1)
 
@@ -56,14 +50,8 @@ githubDB2 = jsonlite::fromJSON(jsonlite::toJSON(extract2))
 
 # Subset data.frame
 githubDB2[githubDB2$full_name == "dowlind1", "created_at"] 
-githubDB2
+githubDB2$login
 
-
-
-jRaw<-("https://api.github.com/users/dowlind1/followers?per_page=100;")
-data3<-fromJSON(jRaw)
-length(data3)
-data3$login
 
 #Want to extract the current users followers and then extract who the current user follows
 #then check if there is duplication or a connection between who the current user follows and their followers
@@ -76,9 +64,8 @@ data3$login
 #using a single for loop to gather data from a user ie. who the follow and who their followers follow.
 #including number of repositories commits etc.
 
-#Interrogate API to get FOLLOWERS
 
-data <- GET("https://api.github.com/users/Finnegr1/following?per_page=100;", getToken1)
+data <- GET("https://api.github.com/users/sorchaobyrne/following", getToken1)
 data
 extract = content(data)
 dataframe1 = jsonlite::fromJSON(jsonlite::toJSON(extract))
@@ -88,7 +75,7 @@ id
 users = c(id)
 
 #main dataframe with data collected from interrogation of API 
-#userDF = data.frame(Username=integer(), Followers = integer(), Repositories = integer())  
+userDF = data.frame(Username=integer(), Followers = integer(), Repositories = integer())  
 
 #create empty vectors to hold collected data
 allusers = c()
@@ -98,83 +85,55 @@ allusers = c()
 
 #FOR loop to gather data from initial user, user hardcoded above 
 
-
-
-
 for(i in 1:length(users)){
+  
+  #getting the current users following data using code tested above
+  
   currentusername = users[i]
-  url = paste("https://api.github.com/users/", currentusername, "/followers",sep = "")
-  followers = fromJSON(url)
-  followerslogin = followers$login
-  url2 = paste("https://api.github.com/users/", currentusername,sep = "")
-  repos = fromJSON(url2)
-  reposlist = repos$public_repos
-}
-totalusers = c(followerslogin, reposlist)
-
-totalFollowers = write.csv(totalusers, 'data.csv')
-
-
-#Interrogate Github
-data <- fromJSON("https://api.github.com/users/sorchaobyrne/followers")
-
-names(data)
-
-#Find login names
-id = data1$login
-
-users = c(id)
-
-#all users followers
-users
-
-#Create temporary vector 
-totalusers = c()
-totalusers2 = c()
-
-#Interrogate Github to get FOLLOWERS into a CSV
-for (i in 1:length(users))
-{
-  username = users[i]
-  url = paste("https://api.github.com/users/" , username, "/followers", sep = "")
-  followers = fromJSON(url)
-  login = followers$login
-  for (j in 1:length(followerslogin))
-  {
-    if (is.element(login[j], totalusers) == FALSE)
-    {
-      totalusers[[length(totalusers)+1]] = login[j]
-    }
+  url = paste("https://api.github.com/users/", currentusername, "/following",sep = "")
+  following = GET( url,getToken1)
+  following2 = content(following)
+  followingDF = jsonlite::fromJSON(jsonlite::toJSON(following2))
+  followingloginName = followingDF$login
+  
+  
+  #if user isnt following anyone move onto next username
+  if(length(following2)==0){
     next
   }
-  next
-}
-totalusers
-
-totalFollowers = write.csv(totalusers, 'Followers.csv')
-
-#Interrogate Github to get FOLLOWING into a CSV
-
-for (i in 1:length(users))
-{
-  username = users[i]
-  url = paste("https://api.github.com/users/" , username, "/following", sep = "")
-  following = fromJSON(url)
-  followinglogin = following$login
-  for (j in 1:length(followinglogin))
-  {
-    if (is.element(followinglogin[j], totalusers2) == FALSE)
-    {
-      totalusers2[[length(totalusers2)+1]] = followinglogin[j]
+  #new for loop to get the followings followers, more data to visualise 
+  
+  for(j in 1:length(followingloginName)){
+    
+    if(is.element(followingloginName[j], allusers) == FALSE){
+      
+      allusers[length(allusers)+1] = followingloginName[j]
+      url2 = paste("https://api.github.com/users/", followingloginName[j],sep = "")
+      followers = GET( url2,getToken1)
+      followers2 = content(followers)
+      followersDF = jsonlite::fromJSON(jsonlite::toJSON(followers2))
+      #followers
+      followerslist = followersDF$followers
+      #repositories
+      reposlist = followersDF$public_repos
+      
+      userDF[nrow(userDF)+1,]=c(followingloginName[j], followerslist, reposlist)
+      
     }
+    if(length(allusers) >200){
+      break
+    }
+    print(length(allusers))
     next
   }
+  if(length(allusers) >200){
+    break
+  }
   next
+  
 }
 
-totalusers2
 
-write.csv(totalusers2, 'Following.csv')
 
 
 
