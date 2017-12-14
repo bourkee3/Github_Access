@@ -3,7 +3,7 @@ Github Visualisation - Emma Bourke (Student ID: 15320411)
 
 Aim: Interrogate the GitHub API to retrieve and display data regarding the logged in developer
 
-All code was produced in R, and then used in Plotly to produce interactive graphs. These graphs are displayed below however to see the interactive graphs please visit my Plotly account page at:
+All code was produced in R, and then used in Plotly to produce interactive graphs. To see the interactive graphs please visit my Plotly account page at:
 
                               https://plot.ly/~bourkee3
 
