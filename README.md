@@ -7,9 +7,10 @@ All code was produced in R, and then used in Plotly to produce interactive graph
 
                               https://plot.ly/~bourkee3
 
-The writing of the code required installation of the following packages: plotly, jsonlite, dplyr, httpuv, httr.
+The data used to create these charts is in my repository as Data.csv. Below is a brief description of how I gathered this data:
 
 Data collected from the interrogation of the API.
+The writing of the code required installation of the following packages: plotly, jsonlite, dplyr, httpuv, httr.
 
 Starting with the user "khotyn"
 First I collected all of the Github accounts who "khotyn" follows
